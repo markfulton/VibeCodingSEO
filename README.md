@@ -466,3 +466,220 @@ Adopting the patterns above—**route‑level meta + JSON‑LD, crawlable links/
     
 - Open Graph protocol reference (for social previews). ([Open Graph Protocol](https://ogp.me/ "The Open Graph protocol"))
     
+---
+
+
+## CMS for Public Route
+
+## 1) Split the surface: CMS for public pages, React for the app
+
+### A) **Marketing on WordPress (root), private React app on `app.` subdomain**
+
+- **What:** Keep all public, indexable content (home, pricing, features, docs, blog) on WordPress at `example.com/…`. Put the authenticated product at `app.example.com`.
+    
+- **Why it works for SEO**
+    
+    - WordPress gives non‑devs fast publishing + mature SEO plugins, sitemaps, and content modeling.
+        
+    - Google treats **subdomains as valid site partitions**; if you want to see aggregate data, add a **Domain Property** in Search Console to include all subdomains/protocols. ([Google Help](https://support.google.com/webmasters/answer/34592?hl=en&utm_source=chatgpt.com "Add a website property to Search Console - Search Console Help"))
+        
+    - You can **noindex** app/login/etc. using `meta robots` or the `X‑Robots‑Tag` header (don’t try to “noindex” in robots.txt). ([Google for Developers](https://developers.google.com/search/docs/crawling-indexing/block-indexing?hl=ja&utm_source=chatgpt.com "noindex を使用してコンテンツをインデックスから除外する | Google ..."))
+        
+- **Integration details**
+    
+    - Content API: WordPress **REST API** (core + custom endpoints) makes your marketing site future‑proof even if you later replace the WP front end. ([WordPress Developer Resources](https://developer.wordpress.org/rest-api/?utm_source=chatgpt.com "REST API Handbook | Developer.WordPress.org"))
+        
+    - Navigation/branding: share a design system; keep consistent header/footer, and cross‑link from WP to key app entry points (login/trial).
+        
+    - Indexing control: **index** root marketing pages; **noindex** app pages (login, dashboards). Use WP plugins for SEO on the root and HTTP headers for the app. ([Google for Developers](https://developers.google.com/search/docs/crawling-indexing/block-indexing?hl=ja&utm_source=chatgpt.com "noindex を使用してコンテンツをインデックスから除外する | Google ..."))
+        
+    - Analytics: use the root domain as your primary property; create a view/roll‑up for cross‑subdomain sessions.
+        
+
+**When to choose this:** you have strong editorial needs, want plugin‑powered SEO, and the app truly is private/auth‑gated.
+
+**Trade‑offs:** split repo/tech stacks; you’ll manage two deploy pipelines. If you later want `/app` (subdirectory) instead of `app.` (subdomain), you can proxy (see next option).
+
+---
+
+### B) **Same domain, different origins: reverse proxy `/app` to your React app**
+
+- **What:** Keep marketing at `example.com/…` (WP or any CMS) and mount the React app at `example.com/app` via **reverse proxy/rewrites** (CDN, Nginx, or platform features).
+    
+- **Why:** preserves one hostname and **consolidates signals** under the root; avoids cross‑origin login cookie issues.
+    
+- **How:** if you’re on Vercel, use **external rewrites** to proxy paths to another origin; if you’re using Next.js, **Multi‑Zones** lets you mount separate apps under one domain. ([Vercel](https://vercel.com/docs/rewrites?utm_source=chatgpt.com "Rewrites on Vercel"))
+    
+
+**Gotchas:** ensure correct status codes for 404/410 under `/app`, keep canonical links precise, and still **noindex** authenticated routes. ([Google for Developers](https://developers.google.com/search/docs/crawling-indexing/block-indexing?hl=ja&utm_source=chatgpt.com "noindex を使用してコンテンツをインデックスから除外する | Google ..."))
+
+---
+
+### C) **Headless WordPress + React front end (Next.js/Gatsby)**
+
+- **What:** WordPress only for content editing/API; public site is built with a React framework that **pre‑renders** pages.
+    
+- **Benefits:** HTML is ready on first byte (great for crawl & Core Web Vitals) + you retain WordPress editorial workflow. **Next.js** offers **ISR** (incremental static regeneration) to keep pages fresh without slow builds; **Gatsby** offers **DSG** (defer building lower‑value pages until first request). ([Next.js](https://nextjs.org/docs/pages/guides/incremental-static-regeneration?utm_source=chatgpt.com "Guides: ISR | Next.js"))
+    
+- **How:** Pull data via WP REST API at build or revalidation time; generate sitemap/robots in the React app (see Next file conventions below). ([WordPress Developer Resources](https://developer.wordpress.org/rest-api/?utm_source=chatgpt.com "REST API Handbook | Developer.WordPress.org"))
+    
+
+---
+
+## 2) React‑friendly frameworks that are **SEO‑forward**
+
+|Framework|Why it’s strong for SEO|Signature features you’ll use|
+|---|---|---|
+|**Next.js (App Router)**|SSR/SSG by default, **Server Components + streaming** ship HTML early; first‑class **metadata**, file‑based **robots/sitemap**; **ISR** updates statics in place.|`generateMetadata`, `app/robots.(ts|
+|**React Router v7 (Remix lineage)**|SSR + **pre‑rendering** for static URLs; **progressive enhancement** keeps pages functional before JS; deployable to edge (Cloudflare).|Route‑level `<Meta/>` + **prerender** config; Workers deployment guides. ([React Router](https://reactrouter.com/start/framework/rendering?utm_source=chatgpt.com "Rendering Strategies \| React Router"))|
+|**TanStack Start**|Modern full‑stack React with **full‑document SSR**, **streaming**, and **Selective SSR per route** (turn SSR off where you don’t need it).|Per‑route `ssr` controls, streaming SSR examples. ([TanStack](https://tanstack.com/start/community/docs?utm_source=chatgpt.com "TanStack Start Overview \| TanStack Start React Docs"))|
+|**Astro (with React islands)**|“**Islands architecture**” → static HTML by default, hydrate only interactive components; add **@astrojs/react** to use React on an ultra‑fast static shell. Great for content/marketing.|React integration, islands (`client:*` directives), built‑in sitemap/adapter ecosystem. ([Astro Docs](https://docs.astro.build/en/concepts/islands/?utm_source=chatgpt.com "Islands architecture - Docs"))|
+|**Gatsby**|Mature SSG with **DSG** + optional SSR; huge source plugin ecosystem for CMSs (WP, Contentful, etc.).|DSG/SSR rendering options; WP integration guides. ([Gatsby](https://www.gatsbyjs.com/docs/conceptual/rendering-options/?utm_source=chatgpt.com "Rendering Options - Gatsby"))|
+|**Vike (ex vite‑plugin‑ssr)**|Lightweight, Vite‑based SSR with **streaming** and **file‑based routing**—more control, fewer opinions.|SSR/streaming docs and routing primitives. ([vite-plugin-ssr.com](https://vite-plugin-ssr.com/?utm_source=chatgpt.com "vite-plugin-ssr"))|
+|**Shopify Hydrogen** _(e‑commerce specific)_|React Router + SSR for storefronts with ready‑made SEO hooks (meta/sitemap/robots).|SEO guide for Hydrogen projects. ([Shopify](https://shopify.dev/docs/api/hydrogen/latest?utm_source=chatgpt.com "Hydrogen - Shopify Developers Platform"))|
+
+> **Why these help SEO:** Google explicitly recommends solving JS‑generated content with **SSR or static rendering**, not “dynamic rendering” as a long‑term solution. The frameworks above make that straightforward. ([Google for Developers](https://developers.google.com/search/docs/crawling-indexing/javascript/dynamic-rendering?utm_source=chatgpt.com "Dynamic rendering as a workaround - Google Developers"))
+
+---
+
+## 3) Three **outside‑the‑box** patterns that work shockingly well
+
+1. **Astro for the entire marketing surface, React where it counts**  
+    Build the whole public site in Astro (ship almost zero JS), sprinkle React components for rich widgets (pricing calculator, carousels). Result: tiny payloads, great LCP/INP, and SEO‑ready HTML. ([Astro Docs](https://docs.astro.build/en/concepts/islands/?utm_source=chatgpt.com "Islands architecture - Docs"))
+    
+2. **Next.js Multi‑Zones to stitch multiple apps into one domain**  
+    Put docs, marketing, and app in separate codebases, yet serve them seamlessly on one host (`/docs`, `/blog`, `/app`) with independent deployments. ([Next.js](https://nextjs.org/docs/pages/guides/multi-zones?utm_source=chatgpt.com "Guides: Multi-Zones | Next.js"))
+    
+3. **Edge‑first SSR**  
+    Deploy Next/React Router to edge runtimes (Vercel Edge Functions, Cloudflare Workers) so time‑to‑HTML is minimal worldwide—even for SSR pages. Faster first HTML helps crawling and UX, and frameworks document streaming/edge patterns. ([Vercel](https://vercel.com/docs/functions/runtimes/edge?utm_source=chatgpt.com "Edge Runtime - Vercel"))
+    
+
+---
+
+## 4) Implementation playbooks
+
+### A) If you pick **WordPress (root) + React app (subdomain)**
+
+**SEO & crawling**
+
+- Public WP pages: indexable; generate sitemap and manage titles/meta in WP.
+    
+- App (auth): add `meta name="robots" content="noindex"` or an **X‑Robots‑Tag** header. Remember: robots.txt **cannot** noindex. ([Google for Developers](https://developers.google.com/search/docs/crawling-indexing/block-indexing?hl=ja&utm_source=chatgpt.com "noindex を使用してコンテンツをインデックスから除外する | Google ..."))
+    
+- Search Console: create a **Domain Property** to see aggregate data across `www`, `app.`, and http/https. ([Google Help](https://support.google.com/webmasters/answer/34592?hl=en&utm_source=chatgpt.com "Add a website property to Search Console - Search Console Help"))
+    
+
+**Links & structure**
+
+- Keep canonical **marketing URLs** at the root. Deep links into the app are fine, but don’t try to get private URLs indexed.
+    
+- If you later go multilingual, subdomains (`fr.example.com`) or subdirectories (`/fr/`) both work—just implement **`hreflang`** correctly. ([Google for Developers](https://developers.google.com/search/docs/specialty/international/managing-multi-regional-sites?utm_source=chatgpt.com "Managing Multi-Regional and Multilingual Sites | Google ..."))
+    
+
+**Hardening the app surface**
+
+- Make `/login`, `/account`, `/dashboard` **noindex** by default (header or meta) and return **401/403** where appropriate to avoid “soft‑404” patterns in the index. ([Google for Developers](https://developers.google.com/search/docs/crawling-indexing/block-indexing?hl=ja&utm_source=chatgpt.com "noindex を使用してコンテンツをインデックスから除外する | Google ..."))
+    
+
+---
+
+### B) If you pick **Headless WordPress + React front end**
+
+- In **Next.js**, fetch WP content in `generateStaticParams/getStaticProps` and set **ISR** (`revalidate`) for near‑real‑time freshness without full rebuilds. Use the **Metadata API** for titles/OG; ship **`app/robots.ts`** and **`app/sitemap.ts`**. ([Next.js](https://nextjs.org/docs/pages/guides/incremental-static-regeneration?utm_source=chatgpt.com "Guides: ISR | Next.js"))
+    
+- In **Gatsby**, pick **DSG** to defer low‑value pages and keep builds fast; SSR pages where needed. ([Gatsby](https://www.gatsbyjs.com/docs/how-to/rendering-options/using-deferred-static-generation/?utm_source=chatgpt.com "Using Deferred Static Generation (DSG) - Gatsby"))
+    
+
+---
+
+### C) If you pick a **React‑first meta‑framework**
+
+- **Next.js (App Router)**
+    
+    - Use **Server Components + streaming** to deliver HTML early; add `loading.tsx` for route‑level streams. ([Next.js](https://nextjs.org/docs/14/app/building-your-application/rendering/server-components?utm_source=chatgpt.com "Rendering: Server Components | Next.js"))
+        
+    - Centralize SEO in `generateMetadata` (per page/layout) + `app/robots.*` + `app/sitemap.*`. ([Next.js](https://nextjs.org/docs/app/getting-started/metadata-and-og-images?utm_source=chatgpt.com "Getting Started: Metadata and OG images | Next.js"))
+        
+    - For hybrid content sites, mix SSG, **ISR**, and SSR per route. ([Next.js](https://nextjs.org/learn/seo/rendering-strategies?utm_source=chatgpt.com "SEO: Rendering Strategies | Next.js"))
+        
+- **React Router v7 / Remix‑style**
+    
+    - SSR + **static pre‑rendering** of known routes gives SEO‑ready HTML even on static hosting. Use route **`meta`** APIs for titles/descriptions. ([React Router](https://reactrouter.com/start/framework/rendering?utm_source=chatgpt.com "Rendering Strategies | React Router"))
+        
+    - Cloudflare Workers/Pages have official guides for React Router deployments (edge SSR). ([Cloudflare Docs](https://developers.cloudflare.com/workers/framework-guides/web-apps/react-router/?utm_source=chatgpt.com "React Router (formerly Remix) · Cloudflare Workers docs"))
+        
+- **TanStack Start**
+    
+    - Turn **SSR on/off per route** (e.g., marketing = SSR, app settings = CSR) to balance cost and SEO. Streaming SSR is built‑in. ([TanStack](https://tanstack.com/start/latest/docs/framework/react/guide/selective-ssr?utm_source=chatgpt.com "Selective Server-Side Rendering (SSR) | TanStack Start ..."))
+        
+- **Astro (with React islands)**
+    
+    - Build the marketing site as static HTML; hydrate only the React components that truly need interactivity (e.g., comparison widgets). ([Astro Docs](https://docs.astro.build/en/concepts/islands/?utm_source=chatgpt.com "Islands architecture - Docs"))
+        
+- **Vike (formerly vite‑plugin‑ssr)**
+    
+    - If you want maximal control on Vite, Vike provides **SSR + streaming** and file‑based routing without locking you into a big framework. ([vite-plugin-ssr.com](https://vite-plugin-ssr.com/?utm_source=chatgpt.com "vite-plugin-ssr"))
+        
+
+---
+
+## 5) Choosing the right path (simple decision rules)
+
+- **Strong editorial + blogs/docs**?  
+    **Astro** or **Headless WP + Next/Gatsby** for marketing, **React app** separate. (Astro if you want the smallest JS; Next if you want one React‑only stack.) ([Astro Docs](https://docs.astro.build/en/concepts/islands/?utm_source=chatgpt.com "Islands architecture - Docs"))
+    
+- **One React codebase for everything (docs + marketing + app)**?  
+    **Next.js App Router** with SSR/SSG/ISR + metadata/robots/sitemap conventions. ([Next.js](https://nextjs.org/docs/14/app/building-your-application/rendering/server-components?utm_source=chatgpt.com "Rendering: Server Components | Next.js"))
+    
+- **Prefer edge runtime + progressive enhancement**?  
+    **React Router (v7)** or **Next on Edge**. ([Cloudflare Docs](https://developers.cloudflare.com/workers/framework-guides/web-apps/react-router/?utm_source=chatgpt.com "React Router (formerly Remix) · Cloudflare Workers docs"))
+    
+- **You want to dial SSR per route**?  
+    **TanStack Start** (Selective SSR). ([TanStack](https://tanstack.com/start/latest/docs/framework/react/guide/selective-ssr?utm_source=chatgpt.com "Selective Server-Side Rendering (SSR) | TanStack Start ..."))
+    
+- **E‑commerce on Shopify**?  
+    **Hydrogen** (React + SSR with dedicated SEO guidance). ([Shopify](https://shopify.dev/docs/api/hydrogen/latest?utm_source=chatgpt.com "Hydrogen - Shopify Developers Platform"))
+    
+
+---
+
+## 6) Common pitfalls (and how to avoid them)
+
+- **Relying on dynamic rendering** long‑term. It’s a workaround; prefer SSR/static rendering. ([Google for Developers](https://developers.google.com/search/docs/crawling-indexing/javascript/dynamic-rendering?utm_source=chatgpt.com "Dynamic rendering as a workaround - Google Developers"))
+    
+- **Trying to “noindex” in robots.txt.** Not supported; use meta or HTTP headers. ([Google for Developers](https://developers.google.com/search/docs/crawling-indexing/block-indexing?hl=ja&utm_source=chatgpt.com "noindex を使用してコンテンツをインデックスから除外する | Google ..."))
+    
+- **Separating marketing/app without Search Console coverage.** Add a **Domain Property** to aggregate signals across subdomains. ([Google Help](https://support.google.com/webmasters/answer/34592?hl=en&utm_source=chatgpt.com "Add a website property to Search Console - Search Console Help"))
+    
+- **Orphaned paginated pages / infinite scroll.** Ensure crawlable links (real `<a>`) to deeper content in whatever framework you choose. (All frameworks above support generating real anchor tags.)
+    
+
+---
+
+## 7) Quick start templates you can adopt this week
+
+- **WordPress + Next.js ISR front end**
+    
+    - WP as headless CMS (REST API). Next’s **ISR** keeps pages fresh; use **Metadata & file conventions** for OG/robots/sitemap. ([WordPress Developer Resources](https://developer.wordpress.org/rest-api/?utm_source=chatgpt.com "REST API Handbook | Developer.WordPress.org"))
+        
+- **Astro marketing site + React islands, app on `app.`**
+    
+    - Astro for public pages (fast static HTML), integrate React components via `@astrojs/react`; point CTAs to `app.` with noindex on auth pages. ([Astro Docs](https://docs.astro.build/en/guides/integrations-guide/react/?utm_source=chatgpt.com "@astrojs/react | Docs"))
+        
+- **Next.js Multi‑Zones or Vercel rewrites**
+    
+    - Serve separate Next apps (or an external app) under one domain with rewrites; deploy independently. ([Next.js](https://nextjs.org/docs/pages/guides/multi-zones?utm_source=chatgpt.com "Guides: Multi-Zones | Next.js"))
+        
+
+---
+
+### Final recommendation (based on your example)
+
+If your priority is **best‑in‑class SEO on public pages** and a **clean, private React app**:
+
+- **Do:** WordPress (root) for all indexable marketing/docs + **noindex** the React app on `app.` (or proxy it to `/app` if you want one hostname). Manage indexing via meta/header, not robots.txt. Use a **Domain Property** in Search Console to track everything together. ([Google for Developers](https://developers.google.com/search/docs/crawling-indexing/block-indexing?hl=ja&utm_source=chatgpt.com "noindex を使用してコンテンツをインデックスから除外する | Google ..."))
+    
+- **Or (one‑stack React alternative):** Next.js (App Router) for marketing + app, using **SSR/SSG/ISR**, **generateMetadata**, and file‑based **robots/sitemap**. If your content team still wants WordPress, run it headless behind Next’s ISR. ([Next.js](https://nextjs.org/docs/14/app/building-your-application/rendering/server-components?utm_source=chatgpt.com "Rendering: Server Components | Next.js"))
+    
+
+If you share your hosting constraints (Vercel/Cloudflare/self‑hosted) and whether content will be edited in WordPress or a headless CMS, I can map this to a concrete repo structure and the exact files (`app/robots.ts`, `app/sitemap.ts`, prerender lists, and `meta`/`generateMetadata` examples) that fit your stack.
