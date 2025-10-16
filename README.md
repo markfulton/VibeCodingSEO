@@ -613,13 +613,13 @@ Add page-specific `og:title`, `og:description`, `og:image` for high CTR, and Twi
 
 <div align="center">
 
-### 🌟 **Ready to Level Up Your React SEO?**
+### 🌟 **Ready to Level Up Your Vibe Coding Skills?**
 
-Join thousands of developers mastering modern web development techniques!
+Join thousands of vibe coders mastering coding and deploying with AI!
 
-[![Join Vibe Coding Skool](https://img.shields.io/badge/🎓_Join_Skool-Premium_Courses-FF6B35?style=for-the-badge)](https://www.skool.com/vibe-coding-is-life/about)
+[![Join Vibe Coding is Life Skool](https://img.shields.io/badge/🎓_Join_Skool-Premium_Courses-FF6B35?style=for-the-badge)](https://www.skool.com/vibe-coding-is-life/about)
 [![Join Facebook Group](https://img.shields.io/badge/👥_Facebook-71K+_Developers-1877F2?style=for-the-badge&logo=facebook)](https://www.facebook.com/groups/vibecodinglife)
 
-**Made with ❤️ by the Vibe Coding Community**
+**Made with ❤️ by [Mark Fulton](https://markfulton.com/)**
 
 </div>
