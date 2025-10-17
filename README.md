@@ -20,7 +20,7 @@ This comprehensive guide provides **practical, production-ready blueprints** for
 <table>
 <tr>
 <td align="center">
-<a href="https://www.skool.com/vibe-coding-is-life/about">
+<a href="https://www.skool.com/vibe-coding-is-life/about?ref=456537abaf37491cbcc6976f3c26af41">
 <img src="https://img.shields.io/badge/🎓_Join_Skool-Vibe_Coding_Courses-FF6B35?style=for-the-badge" alt="Join Vibe Coding Skool">
 </a>
 <br>
@@ -36,7 +36,7 @@ This comprehensive guide provides **practical, production-ready blueprints** for
 </tr>
 </table>
 
-**🎓 [Vibe Coding is Life Skool](https://www.skool.com/vibe-coding-is-life/about)** - Access exclusive courses, training sessions, live builds, and project downloads
+**🎓 [Vibe Coding is Life Skool](https://www.skool.com/vibe-coding-is-life/about?ref=456537abaf37491cbcc6976f3c26af41)** - Access exclusive courses, training sessions, live builds, and project downloads
 
 **👥 [Facebook Community](https://www.facebook.com/groups/vibecodinglife)** - Connect with 71,000+ developers in the largest Vibe Coding group
 
@@ -617,7 +617,7 @@ Add page-specific `og:title`, `og:description`, `og:image` for high CTR, and Twi
 
 Join thousands of vibe coders mastering coding and deploying with AI!
 
-[![Join Vibe Coding is Life Skool](https://img.shields.io/badge/🎓_Join_Skool-Premium_Courses-FF6B35?style=for-the-badge)](https://www.skool.com/vibe-coding-is-life/about)
+[![Join Vibe Coding is Life Skool](https://img.shields.io/badge/🎓_Join_Skool-Premium_Courses-FF6B35?style=for-the-badge)](https://www.skool.com/vibe-coding-is-life/about?ref=456537abaf37491cbcc6976f3c26af41)
 [![Join Facebook Group](https://img.shields.io/badge/👥_Facebook-71K+_Developers-1877F2?style=for-the-badge&logo=facebook)](https://www.facebook.com/groups/vibecodinglife)
 
 **Made with ❤️ by [Mark Fulton](https://markfulton.com/)**
